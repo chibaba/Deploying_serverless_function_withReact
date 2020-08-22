@@ -9,6 +9,7 @@ See the License for the specific language governing permissions and limitations 
 var express = require("express");
 var bodyParser = require("body-parser");
 var awsServerlessExpressMiddleware = require("aws-serverless-express/middleware");
+const axios = require("axios");
 
 // declare a new express app
 var app = express();
@@ -30,13 +31,26 @@ app.use(function (req, res, next) {
  **********************/
 
 app.get("/coins", function (req, res) {
-  const coins = [
-    { name: "Bitcoin", symbol: "BTC", price_usd: "1000" },
-    { name: "Ethereum", symbol: "ETH", price_usd: "500" },
-    { name: "lITECOIN", symbol: "ltc", price_usd: "150" },
-  ];
-  res.json({
-    coins,
+  //Define the base url
+  app.get("/coins", function (req, res) {
+    //Define base url
+    let apiUrl = `https://api.coinlore.com/api/tickers?start=0&limit=10`;
+    //check if there are any query string parameters
+    //if so reset the query string url to include them
+    if (req.apiGateway && req.apiGateway.event.queryStringParameters) {
+      const {
+        start = 0,
+        limit = 10,
+      } = req.apiGateway.event.queryStringParameters;
+      apiUrl = `https://api.coinlore.com/api/tickers/?start=${start}&limit=${limit}`;
+    }
+    // Call API and return response
+    axios
+      .get(apiUrl)
+      .then((response) => {
+        res.json({ coins: response.data.data });
+      })
+      .catch((err) => res.json({ error: err }));
   });
 });
 
